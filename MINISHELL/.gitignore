@@ -1,0 +1,4 @@
+.obj
+minishell
+src/libft/.build_libft
+src/libft/libft.a
