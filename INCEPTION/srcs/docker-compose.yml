@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  adminer:
+    image: adminer
+    ports:
+      - "7800:8080"
+    networks:
+      - inception
+    restart: always
+
+  mariadb:
+    build: requirements/mariadb
+    image: mariadb
+    container_name: mariadb
+    env_file: .env
+    networks:
+      - inception
+    volumes:
+      - db-volume:/var/lib/mysql
+    restart: always
+
+  wordpress:
+    build: requirements/wordpress
+    image: wordpress
+    container_name: wordpress
+    env_file: .env
+    depends_on:
+      - mariadb
+    networks:
+      - inception
+    volumes:
+      - wp-volume:/var/www/html
+    restart: always
+
+  nginx:
+    build: requirements/nginx
+    image: nginx
+    container_name: nginx
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    networks:
+      - inception
+    volumes:
+      - wp-volume:/var/www/html
+    restart: always
+
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer
+    ports:
+      - "9000:9000"
+    networks:
+      - inception
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: always
+
+volumes:
+  wp-volume:
+    driver_opts:
+      o: bind
+      type: none
+      device: ${HOME}/data/wordpress
+
+  db-volume:
+    driver_opts:
+      o: bind
+      type: none
+      device: ${HOME}/data/mariadb
+
+  portainer_data:
+
+networks:
+  inception:
+    name: inception
+    driver: bridge
